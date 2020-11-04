@@ -1,19 +1,13 @@
 package common
 
+/*
+错误码长度5位，0表示成功
+*/
+
 type Code int64
 
 const (
-	RequestSuccess             Code = 0
-	RequestOtherError          Code = 4000
-	RequestKeyNotFound         Code = 4001
-	RequestParameterTypeError  Code = 4002
-	RequestAuthorizedFailed    Code = 4003
-	RequestNotFound            Code = 4004
-	RequestParameterMiss       Code = 4005
-	RequestMethodNotAllowed    Code = 4006
-	RequestExpired             Code = 4007
-	RequestAccessDeny          Code = 4009
-	RequestParameterRangeError Code = 4002
+	RequestSuccess Code = 0
 )
 
 type Response struct {
@@ -30,8 +24,8 @@ type ResponseList struct {
 
 type List struct {
 	Index int64         `json:"index"` // 页码
-	Size  int64         `json:"size"`  // 大小
+	Limit int64         `json:"limit"` // 每页记录数
 	Page  int64         `json:"page"`  // 页数
-	Total int64         `json:"total"` // 总记录数
-	List  []interface{} `json:"list"`
+	Total int64         `json:"total"` // 全部记录数
+	List  []interface{} `json:"list"`  // 记录列表
 }
