@@ -3,7 +3,7 @@ POST http://127.0.0.1:8000/api/v1/team
 Content-Type: application/json
 
 {
-    "team_name": "研发"
+    "team_name": "未分组"
 }
 
 ### 建立用户
@@ -11,13 +11,16 @@ POST http://127.0.0.1:8000/api/v1/user
 Content-Type: application/json
 
 {
-    "user_name": "zhangsan",
-    "real_name": "张三",
-    "mobile": "138000000001",
-    "email": "zhangsan@126.com",
+    "user_name": "zhangsan1",
+    "real_name": "张三1",
+    "mobile": "138000000002",
+    "email": "zhangsan@abc.com2",
     "password": "123456",
-    "team_id": "00000000000000"
+    "team_id": "5fa52e3a32804e2ded0a95e1"
 }
 
 ### 获取单个用户信息
-GET http://127.0.0.1:8000/api/v1/user?_id=xxxxxxxx
+GET http://127.0.0.1:8000/api/v1/user?_id=5fa52e3132804e2ded0a95e0
+
+### 获取用户列表
+GET http://127.0.0.1:8000/api/v1/user/list?index=1&limit=4&sort=create_at,1&sort=team_id,-1

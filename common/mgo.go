@@ -2,8 +2,8 @@ package common
 
 import (
 	"context"
-	"fmt"
 	"log"
+	"math"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -130,21 +130,39 @@ func (m *Mgo) DeleteByField(filter interface{}) (int64, error) {
 // 插入多条数据
 
 // 查询列表数据(支持分页)
-func (m *Mgo) GetList(filter interface{}, pipeline []bson.D) error {
-	// var result common.List
-	var result []interface{}
+func (m *Mgo) GetList(index int64, limit int64, filter interface{}, pipeline []bson.D) (List, error) {
+	var result List
+	var document bson.M
 
 	// 获取total
 	total, _ := m.GetCollection().CountDocuments(context.Background(), filter)
-	fmt.Println(total)
+
+	result.Index = index
+	result.Limit = limit
+	result.Total = total
+	result.Page = int64(math.Ceil(float64(total) / float64(limit)))
+
+	limitStage := bson.D{{"$limit", limit}}
+
+	skip := (index - 1) * limit
+	skipStage := bson.D{{"$skip", skip}}
+
+	pipeline = append(pipeline, limitStage, skipStage)
 
 	// 获取list
 	opts := options.Aggregate().SetMaxTime(2 * time.Second)
-	cursor, _ := m.GetCollection().Aggregate(context.Background(), pipeline, opts)
-	cursor.All(context.Background(), &result)
-	fmt.Print(result)
+	cursor, err := m.GetCollection().Aggregate(context.Background(), pipeline, opts)
+	if err != nil {
+		return List{}, err
+	}
 
-	return nil
+	defer cursor.Close(context.Background())
+	for cursor.Next(context.Background()) {
+		cursor.Decode(&document)
+		result.List = append(result.List, document)
+	}
+
+	return result, nil
 }
 
 // 删除多条数据

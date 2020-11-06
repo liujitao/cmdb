@@ -2,10 +2,14 @@ package user
 
 import (
 	"cmdb/common"
+	"log"
+	"strconv"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,12 +38,10 @@ type LoginRequest struct {
 func UserRegister(router *gin.RouterGroup) {
 	CreateUserIndex()
 	router.POST("/", createUser)
-	/*
-		router.GET("/", GetUser)
-		router.GET("/list", GetUserList)
-		router.PUT("/", UpdateUser)
-		router.DELETE("/", DeleteUser)
-	*/
+	router.GET("/", getUser)
+	router.GET("/list", getUserList)
+	router.PUT("/", updateUser)
+	router.DELETE("/", deleteUser)
 }
 
 /*
@@ -191,14 +193,36 @@ func deleteUser(c *gin.Context) {
 */
 func getUserList(c *gin.Context) {
 	// 请求处理
-	//var response common.Response
+	var response common.ResponseList
 
+	index := c.DefaultQuery("index", "1")
+	limit := c.DefaultQuery("limit", "20")
+	sorts := c.QueryArray("sort")
+	// filter := c.DefaultQuery("filter", "")
+
+	pageIndex, _ := strconv.ParseInt(index, 10, 64)
+	pageLimit, _ := strconv.ParseInt(limit, 10, 64)
+
+	sortStage := bson.D{}
+	if len(sorts) == 0 {
+		sortStage = bson.D{
+			{"$sort", bson.D{
+				{"create_at", 1},
+			}},
+		}
+	} else {
+		sort := []bson.E{}
+		for _, i := range sorts {
+			split := strings.Split(i, ",")
+			field := split[0]
+			order, _ := strconv.Atoi(split[1])
+			sort = append(sort, bson.E{field, order})
+		}
+		sortStage = bson.D{{"$sort", sort}}
+	}
+
+	filter := bson.M{}
 	/*
-		index := c.DefaultQuery("index", "1")
-		limit := c.DefaultQuery("limit", "30")
-
-		sort := c.QueryMap("sort")
-
 		team_id, _ := primitive.ObjectIDFromHex("435343fe345fsfsfsf")
 		matchStage := bson.D{
 			{"$match", bson.D{
@@ -207,54 +231,47 @@ func getUserList(c *gin.Context) {
 				}},
 			}},
 		}
-
-		pageIndex, _ := strconv.Atoi(index)
-		pageLimit, _ := strconv.Atoi(limit)
-
-		limitStage := bson.D{{"$limit", pageLimit}}
-
-		sortStage := bson.D{
-			{"$sort", bson.D{
-				{},
-			}},
-		}
-
-		lookupStage := bson.D{
-			{"$lookup", bson.D{
-				{"from", "team"},
-				{"localField", "team_id"},
-				{"foreignField", "_id"},
-				{"as", "from_team"},
-			}},
-		}
-
-		replaceRootStage := bson.D{
-			{"$replaceRoot", bson.D{
-				{"newRoot", bson.D{
-					{"mergeObjects", bson.A{bson.D{{"$arrayElemAt", bson.A{"$fromteam", 0}}}, "$$ROOT"}},
-				}},
-			}},
-		}
-
-		projectStage := bson.D{
-			{"$project", bson.D{
-				{"from_team", 0},
-				{"password", 0},
-				{"team_id", 0},
-			}},
-		}
-
-		pipeline := mongo.Pipeline{lookupStage, replaceRootStage, projectStage, limitStage, sortStage}
-		filter := bson.M{}
-
-		// 数据库处理
-		err := UserModel.Mgo.GetList(filter, pipeline)
-		if err != nil {
-			c.JSON(200, gin.H{"welcome": "bad"})
-			return
-		}
 	*/
 
+	// 数据库处理
+	lookupStage := bson.D{
+		{"$lookup", bson.D{
+			{"from", "team"},
+			{"localField", "team_id"},
+			{"foreignField", "_id"},
+			{"as", "from_team"},
+		}},
+	}
+
+	replaceRootStage := bson.D{
+		{"$replaceRoot", bson.D{
+			{"newRoot", bson.D{
+				{"mergeObjects", bson.A{bson.D{{"$arrayElemAt", bson.A{"$fromteam", 0}}}, "$$ROOT"}},
+			}},
+		}},
+	}
+
+	projectStage := bson.D{
+		{"$project", bson.D{
+			{"from_team", 0},
+			{"password", 0},
+			{"team_id", 0},
+		}},
+	}
+
+	pipeline := mongo.Pipeline{lookupStage, replaceRootStage, projectStage, sortStage}
+
+	log.Println(pageIndex, pageLimit)
+
+	list, err := UserModel.Mgo.GetList(pageIndex, pageLimit, filter, pipeline)
+	if err != nil {
+		response.Code, response.Message = 2001, err.Error()
+		c.JSON(200, response)
+		return
+	}
+
 	// 响应处理
-	c.JSON(200, gin.H{"welcome": "ok"})
+	response.Code, response.Message = 0, "用户列表获取成功"
+	response.Data = list
+	c.JSON(200, response)
 }
