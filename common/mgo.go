@@ -4,6 +4,8 @@ import (
 	"context"
 	"log"
 	"math"
+	"strconv"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -130,12 +132,11 @@ func (m *Mgo) DeleteByField(filter interface{}) (int64, error) {
 // 插入多条数据
 
 // 查询列表数据(支持分页)
-func (m *Mgo) GetList(index int64, limit int64, filter interface{}, pipeline []bson.D) (List, error) {
+func (m *Mgo) GetList(index int64, limit int64, sorts []string, filters interface{}, pipeline []bson.D) (List, error) {
 	var result List
-	var document bson.M
 
 	// 获取total
-	total, _ := m.GetCollection().CountDocuments(context.Background(), filter)
+	total, _ := m.GetCollection().CountDocuments(context.Background(), filters)
 
 	result.Index = index
 	result.Limit = limit
@@ -147,7 +148,25 @@ func (m *Mgo) GetList(index int64, limit int64, filter interface{}, pipeline []b
 	skip := (index - 1) * limit
 	skipStage := bson.D{{"$skip", skip}}
 
-	pipeline = append(pipeline, limitStage, skipStage)
+	var sortStage bson.D
+	if len(sorts) == 0 {
+		sortStage = bson.D{
+			{"$sort", bson.D{
+				{"create_at", 1},
+			}},
+		}
+	} else {
+		sort := []bson.E{}
+		for _, i := range sorts {
+			split := strings.Split(i, ",")
+			field := split[0]
+			order, _ := strconv.Atoi(split[1])
+			sort = append(sort, bson.E{field, order})
+		}
+		sortStage = bson.D{{"$sort", sort}}
+	}
+
+	pipeline = append(pipeline, limitStage, skipStage, sortStage)
 
 	// 获取list
 	opts := options.Aggregate().SetMaxTime(2 * time.Second)
@@ -158,6 +177,7 @@ func (m *Mgo) GetList(index int64, limit int64, filter interface{}, pipeline []b
 
 	defer cursor.Close(context.Background())
 	for cursor.Next(context.Background()) {
+		var document bson.M
 		cursor.Decode(&document)
 		result.List = append(result.List, document)
 	}

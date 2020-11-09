@@ -2,9 +2,7 @@ package user
 
 import (
 	"cmdb/common"
-	"log"
 	"strconv"
-	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -198,42 +196,29 @@ func getUserList(c *gin.Context) {
 	index := c.DefaultQuery("index", "1")
 	limit := c.DefaultQuery("limit", "20")
 	sorts := c.QueryArray("sort")
-	// filter := c.DefaultQuery("filter", "")
+	filter := c.DefaultQuery("filter", "")
 
 	pageIndex, _ := strconv.ParseInt(index, 10, 64)
 	pageLimit, _ := strconv.ParseInt(limit, 10, 64)
 
-	sortStage := bson.D{}
-	if len(sorts) == 0 {
-		sortStage = bson.D{
-			{"$sort", bson.D{
-				{"create_at", 1},
+	var filters bson.D
+	if filter == "" {
+		filters = bson.D{}
+	} else {
+		filters = bson.D{
+			{"$or", bson.A{
+				bson.D{{"email", bson.D{{"$regex", filter}}}},
+				bson.D{{"mobile", bson.D{{"$regex", filter}}}},
+				bson.D{{"real_name", bson.D{{"$regex", filter}}}},
+				bson.D{{"user_name", bson.D{{"$regex", filter}}}},
+				bson.D{{"team_name", bson.D{{"$regex", filter}}}},
 			}},
 		}
-	} else {
-		sort := []bson.E{}
-		for _, i := range sorts {
-			split := strings.Split(i, ",")
-			field := split[0]
-			order, _ := strconv.Atoi(split[1])
-			sort = append(sort, bson.E{field, order})
-		}
-		sortStage = bson.D{{"$sort", sort}}
 	}
 
-	filter := bson.M{}
-	/*
-		team_id, _ := primitive.ObjectIDFromHex("435343fe345fsfsfsf")
-		matchStage := bson.D{
-			{"$match", bson.D{
-				{"$or", bson.A{
-					bson.D{{"team_id", team_id}},
-				}},
-			}},
-		}
-	*/
-
 	// 数据库处理
+	matchStage := bson.D{{"$match", filters}}
+
 	lookupStage := bson.D{
 		{"$lookup", bson.D{
 			{"from", "team"},
@@ -246,7 +231,7 @@ func getUserList(c *gin.Context) {
 	replaceRootStage := bson.D{
 		{"$replaceRoot", bson.D{
 			{"newRoot", bson.D{
-				{"mergeObjects", bson.A{bson.D{{"$arrayElemAt", bson.A{"$fromteam", 0}}}, "$$ROOT"}},
+				{"$mergeObjects", bson.A{bson.D{{"$arrayElemAt", bson.A{"$from_team", 0}}}, "$$ROOT"}},
 			}},
 		}},
 	}
@@ -254,16 +239,12 @@ func getUserList(c *gin.Context) {
 	projectStage := bson.D{
 		{"$project", bson.D{
 			{"from_team", 0},
-			{"password", 0},
-			{"team_id", 0},
 		}},
 	}
 
-	pipeline := mongo.Pipeline{lookupStage, replaceRootStage, projectStage, sortStage}
+	pipeline := mongo.Pipeline{lookupStage, replaceRootStage, projectStage, matchStage}
 
-	log.Println(pageIndex, pageLimit)
-
-	list, err := UserModel.Mgo.GetList(pageIndex, pageLimit, filter, pipeline)
+	list, err := UserModel.Mgo.GetList(pageIndex, pageLimit, sorts, filters, pipeline)
 	if err != nil {
 		response.Code, response.Message = 2001, err.Error()
 		c.JSON(200, response)

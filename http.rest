@@ -23,4 +23,4 @@ Content-Type: application/json
 GET http://127.0.0.1:8000/api/v1/user?_id=5fa52e3132804e2ded0a95e0
 
 ### 获取用户列表
-GET http://127.0.0.1:8000/api/v1/user/list?index=1&limit=4&sort=create_at,1&sort=team_id,-1
+GET http://127.0.0.1:8000/api/v1/user/list?index=1&limit=4&filter=张三&sort=create_at,1&sort=team_id,-1
