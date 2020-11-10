@@ -135,14 +135,6 @@ func (m *Mgo) DeleteByField(filter interface{}) (int64, error) {
 func (m *Mgo) GetList(index int64, limit int64, sorts []string, filters interface{}, pipeline []bson.D) (List, error) {
     var result List
 
-    // 获取total
-    total, _ := m.GetCollection().CountDocuments(context.Background(), filters)
-
-    result.Index = index
-    result.Limit = limit
-    result.Total = total
-    result.Page = int64(math.Ceil(float64(total) / float64(limit)))
-
     limitStage := bson.D{{"$limit", limit}}
 
     skip := (index - 1) * limit
@@ -181,6 +173,12 @@ func (m *Mgo) GetList(index int64, limit int64, sorts []string, filters interfac
         cursor.Decode(&document)
         result.List = append(result.List, document)
     }
+
+    total := int64(len(result.List))
+    result.Index = index
+    result.Limit = limit
+    result.Total = total
+    result.Page = int64(math.Ceil(float64(total) / float64(limit)))
 
     return result, nil
 }

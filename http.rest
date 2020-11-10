@@ -11,10 +11,10 @@ POST http://127.0.0.1:8000/api/v1/user
 Content-Type: application/json
 
 {
-    "user_name": "zhangsan1",
-    "real_name": "张三1",
-    "mobile": "138000000002",
-    "email": "zhangsan@abc.com2",
+    "user_name": "zhangsan2",
+    "real_name": "张三2",
+    "mobile": "13800000001",
+    "email": "zhangsan2@abc.com",
     "password": "123456",
     "team_id": "5fa52e3a32804e2ded0a95e1"
 }
