@@ -19,8 +19,39 @@ Content-Type: application/json
     "team_id": "5fa52e3a32804e2ded0a95e1"
 }
 
-### 获取单个用户信息
+### 获取用户
 GET http://127.0.0.1:8000/api/v1/user?_id=5fa52e3132804e2ded0a95e0
 
 ### 获取用户列表
 GET http://127.0.0.1:8000/api/v1/user/list?index=1&limit=4&filter=张三&sort=create_at,1&sort=team_id,-1
+
+### 更新用户
+PUT http://127.0.0.1:8000/api/v1/user
+Content-Type: application/json
+
+{
+    "user_name": "zhangsan2",
+    "real_name": "张三2",
+    "mobile": "13800000001",
+    "email": "zhangsan2@abc.com",
+    "password": "1234567890",
+    "team_id": "5fa52e3a32804e2ded0a95e1"
+}
+
+### 删除用户
+DELETE http://127.0.0.1:8000/api/v1/user?_id=5fa52e3132804e2ded0a95e0
+
+### 删除多个用户
+DELETE http://127.0.0.1:8000/api/v1/user?_id=5fa52e3132804e2ded0a95e0&_id=5fa52e3132804e2ded0a95e1&_id=5fa52e3132804e2ded0a95e03
+
+
+### 用户登录
+POST http://127.0.0.1:8000/api/v1/user/login
+Content-Type: application/json
+
+{
+    //"login": "zhangsan11",
+    //"login": "zhangsan11@abc.com",
+    "login": "13800000011",
+    "password": "123456"
+}
