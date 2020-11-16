@@ -33,14 +33,14 @@ type LoginRequest struct {
 /*
 登录注册
 */
-func UserFirst(router *gin.RouterGroup) {
+func UserLogin(router *gin.RouterGroup) {
 	router.POST("/login", loginUser)
 }
 
 /*
 请求路径
 */
-func UserRegistration(router *gin.RouterGroup) {
+func UserEndpoints(router *gin.RouterGroup) {
 	CreateUserIndex()
 	router.POST("/", createUser)
 	router.GET("/", getUser)
@@ -303,7 +303,7 @@ func loginUser(c *gin.Context) {
 
 	// 生成token
 	_id := result.ID.Hex()
-	access_token, refresh_token := GenerateToken(_id)
+	access_token, refresh_token := common.GenerateToken(_id)
 
 	// 写入redis
 	_ = common.RDB.Set(_id+"."+access_token, access_token, time.Minute*15+time.Second*30)
@@ -311,7 +311,11 @@ func loginUser(c *gin.Context) {
 
 	// 响应处理
 	response.Code, response.Message = 0, "用户登录成功"
-	response.Data = map[string]string{"_id": _id, "user_name": result.UserName, "real_name": result.RealName, "access_token": access_token, "refresh_token": refresh_token}
+	response.Data = map[string]string{
+		"_id":           _id,
+		"access_token":  access_token,
+		"refresh_token": refresh_token,
+	}
 	c.JSON(200, response)
 }
 

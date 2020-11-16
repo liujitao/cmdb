@@ -28,28 +28,19 @@ func main() {
 	binding.Validator = new(common.DefaultValidator)
 
 	// 初始化gin
-	route := gin.Default()
+	//route := gin.Default()
+	route := gin.New()
 
 	// 注册请求路径
 	v1 := route.Group("/api/v1")
-	user.UserFirst(v1.Group("/user"))
+	user.UserLogin(v1.Group("/user"))
 
-	team.TeamRegistration(v1.Group("/team"))
-	user.UserRegistration(v1.Group("/user"))
+	// 调用认证中间件
+	v1.Use(user.AuthMiddleware())
+	user.UserEndpoints(v1.Group("/user"))
+	team.TeamEndpoints(v1.Group("/team"))
 
 	// 初始化数据
-
-	// 测试
-	/*
-		access, refresh := user.GenerateToken("123456")
-		fmt.Println(access, refresh)
-
-		_id, exp := user.VerifyToken(access)
-		fmt.Println(_id, exp)
-
-		_id, exp = user.VerifyToken(refresh)
-		fmt.Println(_id, exp)
-	*/
 
 	// 启动服务
 	if err := route.Run(":8000"); err != nil {

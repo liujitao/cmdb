@@ -1,51 +1,55 @@
 package user
 
 import (
+	"cmdb/common"
+	"strings"
 	"time"
 
-	"github.com/dgrijalva/jwt-go"
+	"github.com/gin-gonic/gin"
 )
 
-// 加密密匙
-const SecretKey = "W3hJwqbX2MnLJn3Lo+ZOXTPgqwYrszfwH9BkrxTxG0o="
+func AuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var response common.Response
 
-func GenerateToken(_id string) (string, string) {
-	jwt_token := jwt.New(jwt.GetSigningMethod("HS256"))
+		// 获取token
+		token := c.Request.Header.Get("Authorization")
+		if token == "" {
+			response.Code, response.Message = 2001, "用户请求非法"
+			c.JSON(403, response)
+			c.Abort()
+			return
+		}
 
-	now := time.Now()
-	access_token_exp := now.Add(time.Minute * 15).Unix()
-	refresh_token_exp := now.Add(time.Minute * 30).Unix()
+		// 解析token
+		access_token := strings.Split(token, " ")[1]
+		_id := common.ParseToken(access_token)
 
-	// access_token
-	jwt_token.Claims = jwt.MapClaims{
-		"_id": _id,
-		"exp": access_token_exp,
+		// 判断redis中token是否存在
+		key := _id + "." + access_token
+		_, err := common.RDB.Get(key).Result()
+		if err != nil {
+			response.Code, response.Message = 2001, "用户token不存在"
+			c.JSON(403, response)
+			c.Abort()
+			return
+		}
+
+		// 判断redis中token是否过期
+		if ok, _ := common.RDB.Expire(key, time.Minute*15).Result(); ok {
+			response.Code, response.Message = 2001, "用户token已过期"
+			c.JSON(403, response)
+			c.Abort()
+			return
+		}
+
+		// 生成token
+		access_token, refresh_token := common.GenerateToken(_id)
+
+		// 写入redis
+		_ = common.RDB.Set(_id+"."+access_token, access_token, time.Minute*15+time.Second*30)
+		_ = common.RDB.Set(_id+"."+refresh_token, refresh_token, time.Minute*30+time.Second*30)
+
+		c.Next()
 	}
-	access_token, _ := jwt_token.SignedString([]byte(SecretKey))
-
-	// refresh_token: 30min
-	jwt_token.Claims = jwt.MapClaims{
-		"_id": _id,
-		"exp": refresh_token_exp,
-	}
-	refresh_token, _ := jwt_token.SignedString([]byte(SecretKey))
-
-	return access_token, refresh_token
-}
-
-func VerifyToken(tokenString string) (string, int64) {
-	var _id string
-	var exp int64
-	claims := jwt.MapClaims{}
-
-	token, _ := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(SecretKey), nil
-	})
-
-	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		_id = claims["_id"].(string)
-		exp = int64(claims["exp"].(float64))
-	}
-
-	return _id, exp
 }
