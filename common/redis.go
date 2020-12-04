@@ -1,22 +1,22 @@
 package common
 
 import (
-	"log"
+    "log"
 
-	"github.com/go-redis/redis"
+    "github.com/go-redis/redis"
 )
 
 var RDB *redis.Client
 
 func InitRedisClient(addr string, dbName int, poolSize int) *redis.Client {
-	cli := redis.NewClient(&redis.Options{
-		Addr:     addr,
-		DB:       dbName,
-		PoolSize: 10,
-	})
+    cli := redis.NewClient(&redis.Options{
+        Addr:     addr,
+        DB:       dbName,
+        PoolSize: 10,
+    })
 
-	log.Println("Connected to Redis!")
+    log.Println("Connected to Redis!")
 
-	RDB = cli
-	return cli
+    RDB = cli
+    return cli
 }
