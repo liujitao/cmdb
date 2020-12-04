@@ -8,9 +8,22 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"golang.org/x/crypto/bcrypt"
 
 	"github.com/gin-gonic/gin"
 )
+
+// 用户密码明文加密
+func SetPassword(password string) string {
+	bytePassword := []byte(password)
+	passwordHash, _ := bcrypt.GenerateFromPassword(bytePassword, bcrypt.DefaultCost)
+	return string(passwordHash)
+}
+
+// 校验用户密码
+func VerifyPassword(passwordHash string, password string) error {
+	return bcrypt.CompareHashAndPassword([]byte(passwordHash), []byte(password))
+}
 
 /*
 请求参数
@@ -30,6 +43,20 @@ type LoginRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type RefreshTokenRequest struct {
+	ID           string `json:"_id" binding:"required"`
+	AccessToken  string `json:"access_token" binding:"required"`
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+type ChangePasswordRequest struct {
+	ID           string `json:"_id" binding:"required"`
+	Password     string `json:"password" binding:"required"`
+	NewPassword  string `json:"new_password" binding:"required"`
+	AccessToken  string `json:"access_token" binding:"required"`
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
 /*
 登录注册
 */
@@ -47,6 +74,8 @@ func UserEndpoints(router *gin.RouterGroup) {
 	router.GET("/list", getUserList)
 	router.PUT("/", updateUser)
 	router.DELETE("/", deleteUser)
+	router.POST("/logout", logoutUser)
+	router.POST("/changepassword", changePassword)
 }
 
 /*
@@ -58,7 +87,7 @@ func createUser(c *gin.Context) {
 	var response common.Response
 
 	if err := c.ShouldBindJSON(&params); err != nil {
-		response.Code, response.Message = 1001, err.Error()
+		response.Code, response.Message, response.Error = 1001, "请求参数异常", err.Error()
 		c.JSON(200, response)
 		return
 	}
@@ -70,7 +99,7 @@ func createUser(c *gin.Context) {
 		RealName: params.RealName,
 		Email:    params.Email,
 		Mobile:   params.Mobile,
-		Password: common.SetPassword(params.Password),
+		Password: SetPassword(params.Password),
 		CreateAt: time.Now().Local().Unix(),
 	}
 
@@ -81,7 +110,7 @@ func createUser(c *gin.Context) {
 
 	id, err := UserModel.Mgo.InsertOne(document)
 	if err != nil {
-		response.Code, response.Message = 2001, err.Error()
+		response.Code, response.Message, response.Error = 2001, "数据库处理异常", err.Error()
 		c.JSON(200, response)
 		return
 	}
@@ -106,7 +135,7 @@ func getUser(c *gin.Context) {
 	// 数据库处理
 	filter := bson.D{{"_id", id}}
 	if err := UserModel.Mgo.GetByField(&result, filter); err != nil {
-		response.Code, response.Message = 2001, err.Error()
+		response.Code, response.Message, response.Error = 2001, "数据库处理异常", err.Error()
 		c.JSON(200, response)
 		return
 	}
@@ -127,7 +156,7 @@ func updateUser(c *gin.Context) {
 	var result *User
 
 	if err := c.ShouldBindJSON(&params); err != nil {
-		response.Code, response.Message = 1001, err.Error()
+		response.Code, response.Message, response.Error = 1001, "请求参数异常", err.Error()
 		c.JSON(200, response)
 		return
 	}
@@ -149,7 +178,7 @@ func updateUser(c *gin.Context) {
 	}
 
 	if err := UserModel.Mgo.UpdateByField(&result, filter, update); err != nil {
-		response.Code, response.Message = 2001, err.Error()
+		response.Code, response.Message, response.Error = 2001, "数据库处理异常", err.Error()
 		c.JSON(200, response)
 		return
 	}
@@ -174,7 +203,7 @@ func deleteUser(c *gin.Context) {
 	filter := bson.D{{"_id", id}}
 	count, err := UserModel.Mgo.DeleteByField(filter)
 	if err != nil {
-		response.Code, response.Message = 2001, err.Error()
+		response.Code, response.Message, response.Error = 2001, "数据库处理异常", err.Error()
 		c.JSON(200, response)
 		return
 	}
@@ -251,7 +280,7 @@ func getUserList(c *gin.Context) {
 
 	list, err := UserModel.Mgo.GetList(pageIndex, pageLimit, sorts, filters, pipeline)
 	if err != nil {
-		response.Code, response.Message = 2001, err.Error()
+		response.Code, response.Message, response.Error = 2001, "数据库处理异常", err.Error()
 		c.JSON(200, response)
 		return
 	}
@@ -276,7 +305,7 @@ func loginUser(c *gin.Context) {
 	var result *User
 
 	if err := c.ShouldBindJSON(&params); err != nil {
-		response.Code, response.Message = 1001, err.Error()
+		response.Code, response.Message, response.Error = 1001, "请求参数异常", err.Error()
 		c.JSON(200, response)
 		return
 	}
@@ -290,31 +319,38 @@ func loginUser(c *gin.Context) {
 		}},
 	}
 
+	// 用户验证
 	if err := UserModel.Mgo.GetByField(&result, filter); err != nil {
-		response.Code, response.Message = 2001, err.Error()
+		response.Code, response.Message, response.Error = 2001, "数据库处理异常", err.Error()
 		c.JSON(200, response)
 		return
 	}
 
-	// 校验密码
-	if common.VerifyPassword(params.Password, result.Password) != nil {
-		response.Code, response.Message = 2001, "密码验证失败"
+	if err := VerifyPassword(result.Password, params.Password); err != nil {
+		response.Code, response.Message, response.Error = 2001, "密码验证失败", err.Error()
+		c.JSON(200, response)
+		return
 	}
 
 	// 生成token
 	_id := result.ID.Hex()
-	access_token, refresh_token := common.GenerateToken(_id)
+	token, err := GenerateToken(_id)
+	if err != nil {
+		response.Code, response.Message, response.Error = 2001, "token生成失败", err.Error()
+		c.JSON(200, response)
+		return
+	}
 
-	// 写入redis
-	_ = common.RDB.Set(_id+"."+access_token, access_token, time.Minute*15+time.Second*30)
-	_ = common.RDB.Set(_id+"."+refresh_token, refresh_token, time.Minute*30+time.Second*30)
+	// redis处理
+	_ = common.RDB.Set(_id+":"+token[0], token[0], time.Second*JWT_ACCESS_TOKEN_EXPIRATION)
+	_ = common.RDB.Set(_id+":"+token[1], token[1], time.Second*JWT_REFRESH_TOKEN_EXPIRATION)
 
 	// 响应处理
 	response.Code, response.Message = 0, "用户登录成功"
 	response.Data = map[string]string{
 		"_id":           _id,
-		"access_token":  access_token,
-		"refresh_token": refresh_token,
+		"access_token":  token[0],
+		"refresh_token": token[1],
 	}
 	c.JSON(200, response)
 }
@@ -322,14 +358,161 @@ func loginUser(c *gin.Context) {
 /*
 用户退出
 */
-func logoutUser(c *gin.Context) {}
+func logoutUser(c *gin.Context) {
+	// 请求处理
+	var params RefreshTokenRequest
+	var response common.Response
 
-/*
-刷新token
-*/
-func refreshToken(c *gin.Context) {}
+	if err := c.ShouldBindJSON(&params); err != nil {
+		response.Code, response.Message, response.Error = 1001, "请求参数异常", err.Error()
+		c.JSON(200, response)
+		return
+	}
+
+	// redis处理
+	if _, err := common.RDB.Del(params.ID + ":" + params.AccessToken).Result(); err != nil {
+		response.Code, response.Message, response.Error = 1001, "access_token未清除，用户注销失败", err.Error()
+		c.JSON(200, response)
+		return
+	}
+
+	if _, err := common.RDB.Del(params.ID + ":" + params.RefreshToken).Result(); err != nil {
+		response.Code, response.Message, response.Error = 1001, "refresh_token未清除，用户注销失败", err.Error()
+		c.JSON(200, response)
+		return
+	}
+
+	// 响应处理
+	response.Code, response.Message = 0, "用户注销成功"
+	c.JSON(200, response)
+}
 
 /*
 密码修改
 */
-func changePassword(c *gin.Context) {}
+func changePassword(c *gin.Context) {
+	// 请求处理
+	var params ChangePasswordRequest
+	var response common.Response
+	var result *User
+
+	if err := c.ShouldBindJSON(&params); err != nil {
+		response.Code, response.Message, response.Error = 1001, "请求参数异常", err.Error()
+		c.JSON(200, response)
+		return
+	}
+
+	// 数据库处理
+	id, _ := primitive.ObjectIDFromHex(params.ID)
+	filter := bson.D{{"_id", id}}
+
+	if err := UserModel.Mgo.GetByField(&result, filter); err != nil {
+		response.Code, response.Message, response.Error = 2001, "数据库处理异常", err.Error()
+		c.JSON(200, response)
+		return
+	}
+
+	if err := VerifyPassword(result.Password, params.Password); err != nil {
+		response.Code, response.Message, response.Error = 2001, "密码验证失败", err.Error()
+		c.JSON(200, response)
+		return
+	}
+
+	// 更新密码
+	update := bson.D{
+		{"$set", bson.D{
+			{"password", SetPassword(params.NewPassword)},
+			{"update_at", time.Now().Local().Unix()},
+		},
+		},
+	}
+
+	if err := UserModel.Mgo.UpdateByField(&result, filter, update); err != nil {
+		response.Code, response.Message, response.Error = 2001, "数据库处理异常", err.Error()
+		c.JSON(200, response)
+		return
+	}
+
+	// 生成token
+	_id := result.ID.Hex()
+	token, err := GenerateToken(_id)
+	if err != nil {
+		response.Code, response.Message, response.Error = 2001, "token生成失败", err.Error()
+		c.JSON(200, response)
+		return
+	}
+
+	// redis处理
+	if _, err := common.RDB.Del(params.ID + ":" + params.AccessToken).Result(); err != nil {
+		response.Code, response.Message, response.Error = 1001, "access_token未清除", err.Error()
+		c.JSON(200, response)
+		return
+	}
+
+	if _, err := common.RDB.Del(params.ID + ":" + params.RefreshToken).Result(); err != nil {
+		response.Code, response.Message, response.Error = 1001, "refresh_token未清除", err.Error()
+		c.JSON(200, response)
+		return
+	}
+
+	_ = common.RDB.Set(_id+":"+token[0], token[0], time.Second*JWT_ACCESS_TOKEN_EXPIRATION)
+	_ = common.RDB.Set(_id+":"+token[1], token[1], time.Second*JWT_REFRESH_TOKEN_EXPIRATION)
+
+	// 响应处理
+	response.Code, response.Message = 0, "用户密码已更新"
+	response.Data = map[string]string{
+		"_id":           _id,
+		"access_token":  token[0],
+		"refresh_token": token[1],
+	}
+	c.JSON(200, response)
+}
+
+/*
+刷新token
+*/
+func refreshToken(c *gin.Context) {
+	// 请求处理
+	var params RefreshTokenRequest
+	var response common.Response
+
+	if err := c.ShouldBindJSON(&params); err != nil {
+		response.Code, response.Message, response.Error = 1001, "请求参数异常", err.Error()
+		c.JSON(200, response)
+		return
+	}
+
+	// 生成token
+	_id := params.ID
+	token, err := GenerateToken(_id)
+	if err != nil {
+		response.Code, response.Message, response.Error = 2001, "token生成失败", err.Error()
+		c.JSON(200, response)
+		return
+	}
+
+	// redis处理
+	if _, err := common.RDB.Del(params.ID + ":" + params.AccessToken).Result(); err != nil {
+		response.Code, response.Message, response.Error = 1001, "access_token未清除", err.Error()
+		c.JSON(200, response)
+		return
+	}
+
+	if _, err := common.RDB.Del(params.ID + ":" + params.RefreshToken).Result(); err != nil {
+		response.Code, response.Message, response.Error = 1001, "refresh_token未清除", err.Error()
+		c.JSON(200, response)
+		return
+	}
+
+	_ = common.RDB.Set(_id+":"+token[0], token[0], time.Second*JWT_ACCESS_TOKEN_EXPIRATION)
+	_ = common.RDB.Set(_id+":"+token[1], token[1], time.Second*JWT_REFRESH_TOKEN_EXPIRATION)
+
+	// 响应处理
+	response.Code, response.Message = 0, "用户token已刷新"
+	response.Data = map[string]string{
+		"_id":           _id,
+		"access_token":  token[0],
+		"refresh_token": token[1],
+	}
+	c.JSON(200, response)
+}

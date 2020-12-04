@@ -3,7 +3,7 @@ POST http://127.0.0.1:8000/api/v1/team
 Content-Type: application/json
 
 {
-    "team_name": "未分组"
+    "team_name": "运维"
 }
 
 ### 建立用户
@@ -11,20 +11,16 @@ POST http://127.0.0.1:8000/api/v1/user
 Content-Type: application/json
 
 {
-    "user_name": "zhangsan2",
-    "real_name": "张三2",
-    "mobile": "13800000001",
-    "email": "zhangsan2@abc.com",
+    "user_name": "zhangsan11",
+    "real_name": "zhangsan11",
+    "mobile": "13800000011",
+    "email": "zhangsan11@abc.com",
     "password": "123456",
-    "team_id": "5fa52e3a32804e2ded0a95e1"
+    "team_id": "5fb3702a598945dced204025"
 }
 
 ### 获取用户""
 GET http://127.0.0.1:8000/api/v1/user?_id=5fa52e3132804e2ded0a95e0
-: 
-
-### 获取用户列表
-GET http://127.0.0.1:8000/api/v1/user/list?index=1&limit=1&filter=&sort=create_at,1&sort=team_id,-1
 
 ### 更新用户
 PUT http://127.0.0.1:8000/api/v1/user　
@@ -45,16 +41,35 @@ DELETE http://127.0.0.1:8000/api/v1/user?_id=5fa52e3132804e2ded0a95e0
 ### 删除多个用户
 DELETE http://127.0.0.1:8000/api/v1/user?_id=5fa52e3132804e2ded0a95e0&_id=5fa52e3132804e2ded0a95e1&_id=5fa52e3132804e2ded0a95e03
 
+### 获取用户列表
+GET http://127.0.0.1:8000/api/v1/user/list?index=1&limit=1&filter=&sort=create_at,1&sort=team_id,-1
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmI0ZGNjYWE2MWRhNzA0MmRhMjg4MWUiLCJleHAiOjE2MDU2OTEzNzl9.QXORL6CbdG8FvGr7FOO3uGCFIWghyIwLBfh_atDKdOc
 
-### 用户登录 curl -X POST -H "Content-Type: application/json" -d '{"login": "13800000011","password": "123456"}'  http://127.0.0.1:8000/api/v1/user/login
-
+####  用户登录
 POST http://127.0.0.1:8000/api/v1/user/login
 Content-Type: application/json
 
 {
     //"login": "zhangsan11",
     //"login": "zhangsan11@abc.com",
-    "login": "13800000011",
+    "login": "13900000011",
     "password": "123456"
 }
 
+#### 用户登录
+curl -l -X POST -H "Content-Type: application/json" -d '{"login": "13900000011", "password": "123456"}' http://127.0.0.1:8000/api/v1/user/login
+
+#### 修改密码
+curl -l -X POST -H "Content-Type: application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmM4YzQ5NmYzMzJhN2E4MWFmMWE4MDIiLCJleHAiOjE2MDY5Nzk1NzV9.yCF2JVAQZQqEXcFwjVK8Itr11iLjQZrQ4PtjWlX1Z10" \
+-d '{"_id":"5fc8c496f332a7a81af1a802", "password": "123456", "new_password": "654321", "access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmM4YzQ5NmYzMzJhN2E4MWFmMWE4MDIiLCJleHAiOjE2MDY5Nzk1NzV9.yCF2JVAQZQqEXcFwjVK8Itr11iLjQZrQ4PtjWlX1Z10","refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmM4YzQ5NmYzMzJhN2E4MWFmMWE4MDIiLCJleHAiOjE2MDcwNjUzNzV9.j59EvcaP-vBIx2Dtl62_gXaLrYD2elsK__ei5lPDad0"}' \
+ http://127.0.0.1:8000/api/v1/user/changepassword
+
+#### 用户退出
+curl -l -X POST -H "Content-Type: application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmM4YzQ5NmYzMzJhN2E4MWFmMWE4MDIiLCJleHAiOjE2MDY5Nzc3Njh9.dzQodLK-hyznzAze9lhtjC-4h-7cs_fVvOX4ck1dods" \
+-d '{"_id":"5fc8c496f332a7a81af1a802","access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmM4YzQ5NmYzMzJhN2E4MWFmMWE4MDIiLCJleHAiOjE2MDY5Nzc3Njh9.dzQodLK-hyznzAze9lhtjC-4h-7cs_fVvOX4ck1dods","refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmM4YzQ5NmYzMzJhN2E4MWFmMWE4MDIiLCJleHAiOjE2MDcwNjM1Njh9.LeY0CdxcHkKnLxJ3zA5pid_rqbzKmoa_NNBaD7OPSsw"}' \
+ http://127.0.0.1:8000/api/v1/user/logout
+
+#### 刷新token
+curl -l -X POST -H "Content-Type: application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmM4YzQ5NmYzMzJhN2E4MWFmMWE4MDIiLCJleHAiOjE2MDY5Nzc3Njh9.dzQodLK-hyznzAze9lhtjC-4h-7cs_fVvOX4ck1dods" \
+-d 

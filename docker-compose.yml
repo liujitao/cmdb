@@ -1,17 +1,58 @@
 version: '3'
 
 services:
+  cmdb-app:
+    image: cmdb:latest
+    container_name: cmdb-app
+    volumes:
+      - .:/app
+    ports:
+      - 8000:8000
+    restart: unless-stopped
+
   cmdb-mongo:
     image: mongo:latest
     container_name: cmdb-mongo
-    volumes:
-      - ./db:/data/db
     ports:
       - 27017:27017
     restart: unless-stopped
+    networks:
+      default:
+        ipv4_address: 172.18.0.3
+
   cmdb-redis:
     image: redis:latest
     container_name: cmdb-redis
     ports:
       - 6379:6379
     restart: unless-stopped
+    networks:
+      default:
+        ipv4_address: 172.18.0.4
+
+  mongoclient:
+    image: mongoclient/mongoclient:latest
+    container_name: mongoclient
+    ports:
+      - 3000:3000
+    restart: unless-stopped
+    networks:
+      default:
+        ipv4_address: 172.18.0.5
+
+  redisinsight:
+    image: redislabs/redisinsight:latest
+    container_name: redisinsight 
+    ports:
+      - 8001:8001
+    restart: unless-stopped
+    networks:
+      default:
+        ipv4_address: 172.18.0.6
+
+networks:
+   default:
+      driver: bridge
+      ipam:
+        config:
+          - subnet: 172.18.0.0/16
