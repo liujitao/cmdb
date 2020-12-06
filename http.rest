@@ -1,10 +1,10 @@
 ### 建立团队
-POST http://127.0.0.1:8000/api/v1/team
-Content-Type: application/json
+curl -l -X POST -H "Content-Type: application/json" \
+-d '{"team_name": "运维"}' http://127.0.0.1:8000/api/v1/team
 
-{
-    "team_name": "运维"
-}
+### 获取团队列表
+curl -l -X GET \
+http://127.0.0.1:8000/api/v1/team/list?index=1&limit=1&filter=&sort=create_at,1&sort=_id,-1
 
 ### 建立用户
 POST http://127.0.0.1:8000/api/v1/user
@@ -36,26 +36,18 @@ Content-Type: application/json
 }
 
 ### 删除用户
-DELETE http://127.0.0.1:8000/api/v1/user?_id=5fa52e3132804e2ded0a95e0
+curl -l -X DELETE \
+http://127.0.0.1:8000/api/v1/user?_id=5fa52e3132804e2ded0a95e0
 
 ### 删除多个用户
-DELETE http://127.0.0.1:8000/api/v1/user?_id=5fa52e3132804e2ded0a95e0&_id=5fa52e3132804e2ded0a95e1&_id=5fa52e3132804e2ded0a95e03
+curl -l -X DELETE \
+http://127.0.0.1:8000/api/v1/user?_id=5fa52e3132804e2ded0a95e0&_id=5fa52e3132804e2ded0a95e1&_id=5fa52e3132804e2ded0a95e03
 
 ### 获取用户列表
-GET http://127.0.0.1:8000/api/v1/user/list?index=1&limit=1&filter=&sort=create_at,1&sort=team_id,-1
+curl -l -X GET \
+http://127.0.0.1:8000/api/v1/user/list?index=1&limit=1&filter=&sort=create_at,1&sort=team_id,-1
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmI0ZGNjYWE2MWRhNzA0MmRhMjg4MWUiLCJleHAiOjE2MDU2OTEzNzl9.QXORL6CbdG8FvGr7FOO3uGCFIWghyIwLBfh_atDKdOc
-
-####  用户登录
-POST http://127.0.0.1:8000/api/v1/user/login
-Content-Type: application/json
-
-{
-    //"login": "zhangsan11",
-    //"login": "zhangsan11@abc.com",
-    "login": "13900000011",
-    "password": "123456"
-}
 
 #### 用户登录
 curl -l -X POST -H "Content-Type: application/json" -d '{"login": "13900000011", "password": "123456"}' http://127.0.0.1:8000/api/v1/user/login
@@ -72,4 +64,5 @@ curl -l -X POST -H "Content-Type: application/json" -H "Authorization: Bearer ey
 
 #### 刷新token
 curl -l -X POST -H "Content-Type: application/json" -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmM4YzQ5NmYzMzJhN2E4MWFmMWE4MDIiLCJleHAiOjE2MDY5Nzc3Njh9.dzQodLK-hyznzAze9lhtjC-4h-7cs_fVvOX4ck1dods" \
--d 
+-d '{"_id":"5fc8c496f332a7a81af1a802","access_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmM4YzQ5NmYzMzJhN2E4MWFmMWE4MDIiLCJleHAiOjE2MDY5Nzc3Njh9.dzQodLK-hyznzAze9lhtjC-4h-7cs_fVvOX4ck1dods","refresh_token":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJfaWQiOiI1ZmM4YzQ5NmYzMzJhN2E4MWFmMWE4MDIiLCJleHAiOjE2MDcwNjM1Njh9.LeY0CdxcHkKnLxJ3zA5pid_rqbzKmoa_NNBaD7OPSsw"}' \
+ http://127.0.0.1:8000/api/v1/user/refreshtoken

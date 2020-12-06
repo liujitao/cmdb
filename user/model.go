@@ -6,6 +6,41 @@ import (
     "go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+/*
+请求参数
+*/
+type UserRequest struct {
+    ID       string `json:"_id"`
+    UserName string `json:"user_name" binding:"required"`
+    RealName string `json:"real_name" binding:"required"`
+    Mobile   string `json:"mobile" binding:"required,check_mobile"`
+    Email    string `json:"email" binding:"required,email"`
+    Password string `json:"password" binding:"required"`
+    Team     string `json:"team_id"`
+}
+
+type LoginRequest struct {
+    Login    string `json:"login" binding:"required"`
+    Password string `json:"password" binding:"required"`
+}
+
+type RefreshTokenRequest struct {
+    ID           string `json:"_id" binding:"required"`
+    AccessToken  string `json:"access_token" binding:"required"`
+    RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+type ChangePasswordRequest struct {
+    ID           string `json:"_id" binding:"required"`
+    Password     string `json:"password" binding:"required"`
+    NewPassword  string `json:"new_password" binding:"required"`
+    AccessToken  string `json:"access_token" binding:"required"`
+    RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
+/*
+用户
+*/
 type User struct {
     ID       primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
     UserName string             `bson:"user_name" json:"user_name"`

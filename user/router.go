@@ -26,38 +26,6 @@ func VerifyPassword(passwordHash string, password string) error {
 }
 
 /*
-请求参数
-*/
-type UserRequest struct {
-    ID       string `json:"_id"`
-    UserName string `json:"user_name" binding:"required"`
-    RealName string `json:"real_name" binding:"required"`
-    Mobile   string `json:"mobile" binding:"required,check_mobile"`
-    Email    string `json:"email" binding:"required,email"`
-    Password string `json:"password" binding:"required"`
-    Team     string `json:"team_id"`
-}
-
-type LoginRequest struct {
-    Login    string `json:"login" binding:"required"`
-    Password string `json:"password" binding:"required"`
-}
-
-type RefreshTokenRequest struct {
-    ID           string `json:"_id" binding:"required"`
-    AccessToken  string `json:"access_token" binding:"required"`
-    RefreshToken string `json:"refresh_token" binding:"required"`
-}
-
-type ChangePasswordRequest struct {
-    ID           string `json:"_id" binding:"required"`
-    Password     string `json:"password" binding:"required"`
-    NewPassword  string `json:"new_password" binding:"required"`
-    AccessToken  string `json:"access_token" binding:"required"`
-    RefreshToken string `json:"refresh_token" binding:"required"`
-}
-
-/*
 登录注册
 */
 func UserLogin(router *gin.RouterGroup) {
@@ -258,21 +226,21 @@ func getUserList(c *gin.Context) {
             {"from", "team"},
             {"localField", "team_id"},
             {"foreignField", "_id"},
-            {"as", "from_team"},
+            {"as", "team"},
         }},
     }
 
     replaceRootStage := bson.D{
         {"$replaceRoot", bson.D{
             {"newRoot", bson.D{
-                {"$mergeObjects", bson.A{bson.D{{"$arrayElemAt", bson.A{"$from_team", 0}}}, "$$ROOT"}},
+                {"$mergeObjects", bson.A{bson.D{{"$arrayElemAt", bson.A{"$team", 0}}}, "$$ROOT"}},
             }},
         }},
     }
 
     projectStage := bson.D{
         {"$project", bson.D{
-            {"from_team", 0},
+            {"team", 0},
         }},
     }
 

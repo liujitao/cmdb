@@ -41,7 +41,7 @@ func main() {
     user.UserLogin(v1.Group("/user"))
 
     // 调用认证中间件
-    v1.Use(user.AuthMiddleware())
+    //v1.Use(user.AuthMiddleware())
     user.UserEndpoints(v1.Group("/user"))
     team.TeamEndpoints(v1.Group("/team"))
 

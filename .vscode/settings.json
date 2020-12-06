@@ -8,13 +8,21 @@
     "go.vetFlags": [
         "[\"-all\", \"-shadow\"]"
     ],
-    "explorer.confirmDelete": false,
     "editor.fontFamily": "'Ubuntu Mono Bold', 'monospace', monospace, 'Droid Sans Fallback'",
     "editor.fontSize": 13,
     "editor.renderControlCharacters": true,
-    "editor.renderWhitespace": "all",
-    "editor.mouseWheelZoom": false,
-    "editor.wordWrap": "on",
+    "editor.renderWhitespace": "none",
     "editor.tabSize": 4,
-    "editor.formatOnSave": true
+    "editor.insertSpaces": true,
+    "editor.lineNumbers": "on",
+    "editor.detectIndentation": true,
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.formatOnType": true,
+    "editor.snippetSuggestions": "top",
+    "editor.suggestSelection": "first",
+    "editor.autoIndent": "keep",
+    "editor.highlightActiveIndentGuide": false,
+    "explorer.confirmDelete": false,
+    "files.autoSave": "afterDelay"
 }

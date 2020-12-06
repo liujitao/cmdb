@@ -6,6 +6,18 @@ import (
     "go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+/*
+请求参数
+*/
+type TeamRequest struct {
+    ID       string `json:"_id"`
+    TeamName string `json:"team_name" binding:"required"`
+}
+
+/*
+团队
+*/
+
 type Team struct {
     ID       primitive.ObjectID `bson:"_id,omitempty" json:"_id"`
     TeamName string             `bson:"team_name" json:"team_name"`
