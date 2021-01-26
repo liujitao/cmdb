@@ -1,28 +1,61 @@
 {
-    "go.goroot": "/data/go",
-    "go.gopath": "/data/gopath",
-    "go.formatTool": "goimports",
-    "go.lintFlags": [
-        "[\"-min_confidence=.8\"]"
-    ],
-    "go.vetFlags": [
-        "[\"-all\", \"-shadow\"]"
-    ],
-    "editor.fontFamily": "'Ubuntu Mono Bold', 'monospace', monospace, 'Droid Sans Fallback'",
-    "editor.fontSize": 13,
-    "editor.renderControlCharacters": true,
-    "editor.renderWhitespace": "none",
-    "editor.tabSize": 4,
-    "editor.insertSpaces": true,
-    "editor.lineNumbers": "on",
-    "editor.detectIndentation": true,
-    "editor.formatOnSave": true,
-    "editor.formatOnPaste": true,
-    "editor.formatOnType": true,
-    "editor.snippetSuggestions": "top",
-    "editor.suggestSelection": "first",
-    "editor.autoIndent": "keep",
-    "editor.highlightActiveIndentGuide": false,
-    "explorer.confirmDelete": false,
-    "files.autoSave": "afterDelay"
+  "editor.detectIndentation": false,
+  "editor.fontFamily": "'Droid Sans Mono', 'Courier New', monospace, 'Droid Sans Fallback'", //  这个是控制字体样式的
+  "editor.fontSize": 13,
+  "editor.tabSize": 4, // 重新设定tabsize
+  "editor.tabCompletion": "on", // 保存时自动格式化的，并且以4格缩进
+  "editor.wordWrapColumn": 200,
+  "editor.wordWrap": "bounded",
+  // 控制折行方式。可以选择： - “off” （禁用折行）， - “on” （视区折行）， - “wordWrapColumn”（在“editor.wordWrapColumn”处折行）或 - “bounded”（在视区与“editor.wordWrapColumn”两者的较小者处折行）。
+  "editor.formatOnSave": false, // #每次保存的时候自动格式化
+  "editor.suggest.snippetsPreventQuickSuggestions": true, //自动补全的
+  "editor.codeActionsOnSave": { "source.fixAll.eslint": true }, // #每次保存的时候将代码按eslint格式进行修复,vscode es6语法检测配置
+  "editor.mouseWheelZoom": true,
+  "editor.suggestSelection": "first",
+  "editor.formatOnType": true,
+  "editor.quickSuggestions": {
+    "other": true,
+    "comments": true,
+    "strings": true
+  },
+
+  "explorer.confirmDelete": false, // 自动补全
+  "explorer.confirmDragAndDrop": false,
+  
+  "workbench.sideBar.location": "left",
+  "workbench.editorAssociations": [],
+  "workbench.colorTheme": "Monokai",
+
+  // 使能每一种语言默认格式化规则
+  "[go]": { "editor.defaultFormatter":"golang.go" },
+  "[json]": { "editor.defaultFormatter":"vscode.json-language-features" },
+
+  "git.confirmSync": false, // *** 这个是提示空格的点点
+  "launch": {},
+  "terminal.integrated.env.osx": {},
+  "files.autoSave": "off",
+  
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/bower_components": true,
+    "**/dist": true
+  },
+
+  "files.exclude": {
+    "**/.classpath": true,
+    "**/.project": true,
+    "**/.settings": true,
+    "**/.factorypath": true
+  },
+
+  /* go的配置 */
+  "go.goroot": "/data/go",
+  "go.gopath": "/data/gopath",
+  "go.formatTool": "goformat",
+  "go.lintFlags": [
+    "[\"-min_confidence=.8\"]"
+  ],
+  "go.vetFlags": [
+    "[\"-all\", \"-shadow\"]"
+  ],
 }

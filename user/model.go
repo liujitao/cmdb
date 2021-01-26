@@ -38,6 +38,11 @@ type ChangePasswordRequest struct {
     RefreshToken string `json:"refresh_token" binding:"required"`
 }
 
+type VerifyCaptchaRequest struct {
+    ID   string `json:"id" binding:"required"`
+    Code string `json:"code" binding:"required"`
+}
+
 /*
 用户
 */
