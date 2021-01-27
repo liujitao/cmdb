@@ -46,7 +46,7 @@ func main() {
     team.TeamEndpoints(v1.Group("/team"))
 
     // 初始化数据
-    // initData(client)
+    //initData(client)
 
     // 启动服务
     if err := route.Run(":8000"); err != nil {
@@ -85,7 +85,7 @@ func initData(client *mongo.Client) {
         Team:     ids[0],
     })
 
-    for i := 10; i < 40; i++ {
+    for i := 11; i < 90; i++ {
         id := strconv.Itoa(i)
         users = append(users, user.User{
             ID:       primitive.NewObjectID(),
